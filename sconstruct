@@ -9,15 +9,21 @@ import os
 import os.path
 import zipfile
 import sys
+import generate_changelog
 
 # Add-on localization exchange facility and the template requires Python 3.10.
 # For best practice, use Python 3.11 or later to align with NVDA development.
-EnsurePythonVersion(3, 10)
+# EnsurePythonVersion(3, 10)
 sys.dont_write_bytecode = True
 
 # Bytecode should not be written for build vars module to keep the repository root folder clean.
 import buildVars  # NOQA: E402
 
+# Personalized action to generate Changelog
+def gerar_changelog_action(target, source, env):
+	output = str(target[0])
+	generate_changelog.generate_changelog(file_name=output)
+	return None
 
 def md2html(source, dest):
 	import markdown
@@ -292,12 +298,13 @@ env.Depends(pot, i18nFiles)
 mergePot = env.gettextMergePotFile("${addon_name}-merge.pot", i18nFiles, **gettextvars)
 env.Alias("mergePot", mergePot)
 env.Depends(mergePot, i18nFiles)
+changelog = env.Command("changelog.md", [], gerar_changelog_action)
+env.Alias("changelog", changelog)
 
 # Generate Manifest path
 manifest = env.NVDAManifest(os.path.join("addon", "manifest.ini"), os.path.join("manifest.ini.tpl"))
 # Ensure manifest is rebuilt if buildVars is updated.
 env.Depends(manifest, "buildVars.py")
-
 env.Depends(addon, manifest)
 env.Default(addon)
 env.Clean(addon, [".sconsign.dblite", "addon/doc/" + buildVars.baseLanguage + "/"])
