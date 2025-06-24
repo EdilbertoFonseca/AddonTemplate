@@ -10,10 +10,11 @@
 
 # Date of creation: 23/06/2025
 
-import subprocess
 import re
+import subprocess
 from collections import defaultdict
 
+# Constants for commit types with emojis
 TYPES = {
     "feat": "✨ New Features",
     "fix": "🐛 Bug Fixes",
@@ -28,18 +29,22 @@ TYPES = {
 }
 
 def run_command(cmd):
+    """Run a shell command and return its output."""
     result = subprocess.check_output(cmd, stderr=subprocess.DEVNULL)
     return result.decode("utf-8").strip()
 
 def get_tags():
+    """Get all Git tags sorted by creation date."""
     tags = run_command(["git", "tag", "--sort=-creatordate"]).split("\n")
     return tags
 
 def get_tag_date(tag):
+    """Get the creation date of a specific Git tag."""
     date = run_command(["git", "log", "-1", "--format=%ad", "--date=short", tag])
     return date
 
 def get_commits_between_tags(current_tag, previous_tag=None):
+    """Get commits between two Git tags."""
     if previous_tag:
         range_ = f"{previous_tag}..{current_tag}"
     else:
@@ -58,6 +63,7 @@ def get_commits_between_tags(current_tag, previous_tag=None):
     return commits
 
 def group_by_type(commits):
+    """Group commits by their type based on the commit message."""
     grouped = defaultdict(list)
     for hash_, msg, author, date in commits:
         type_match = re.match(r"(\w+)(\(.+\))?:\s", msg)
@@ -67,6 +73,7 @@ def group_by_type(commits):
     return grouped
 
 def generate_changelog(file_name="CHANGELOG.md"):
+    """Generate a changelog based on Git tags and commits."""
     tags = get_tags()
     if not tags:
         print("⚠️ No Git tags found. Add one with `git tag v1.0.0`.")

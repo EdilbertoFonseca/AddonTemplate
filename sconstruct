@@ -7,17 +7,17 @@ import codecs
 import gettext
 import os
 import os.path
-import zipfile
 import sys
-import generate_changelog
+import zipfile
 
 # Add-on localization exchange facility and the template requires Python 3.10.
 # For best practice, use Python 3.11 or later to align with NVDA development.
 # EnsurePythonVersion(3, 10)
 sys.dont_write_bytecode = True
 
-# Bytecode should not be written for build vars module to keep the repository root folder clean.
+# Bytecode should not be written for buildVars and generate_changelog modules to keep the repository root folder clean.
 import buildVars  # NOQA: E402
+import generate_changelog  # NOQA: E402
 
 # Personalized action to generate Changelog
 def gerar_changelog_action(target, source, env):
@@ -298,11 +298,14 @@ env.Depends(pot, i18nFiles)
 mergePot = env.gettextMergePotFile("${addon_name}-merge.pot", i18nFiles, **gettextvars)
 env.Alias("mergePot", mergePot)
 env.Depends(mergePot, i18nFiles)
+
+# Generate changelog from git history
 changelog = env.Command("changelog.md", [], gerar_changelog_action)
 env.Alias("changelog", changelog)
 
 # Generate Manifest path
 manifest = env.NVDAManifest(os.path.join("addon", "manifest.ini"), os.path.join("manifest.ini.tpl"))
+
 # Ensure manifest is rebuilt if buildVars is updated.
 env.Depends(manifest, "buildVars.py")
 env.Depends(addon, manifest)
